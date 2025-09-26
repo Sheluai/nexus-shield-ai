@@ -2,6 +2,8 @@ import { useState } from "react";
 import { VPNShield } from "@/components/VPNShield";
 import { SearchEngine } from "@/components/SearchEngine";
 import { Button } from "@/components/ui/button";
+import { AdMobBanner } from "@/components/ads/AdMobBanner";
+import { useAdMobInterstitial } from "@/components/ads/AdMobInterstitial";
 import { MapPin, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +22,13 @@ export function Home({ onPageChange }: HomeProps) {
   });
 
   const { toast } = useToast();
+  
+  const { loadAd, showAd } = useAdMobInterstitial({
+    onAdClosed: () => {
+      // Ad closed, user can continue
+      console.log('Interstitial ad closed');
+    }
+  });
 
   const handleToggleConnection = async () => {
     if (isConnected) {
@@ -135,6 +144,13 @@ export function Home({ onPageChange }: HomeProps) {
               <div className="text-sm text-muted-foreground">Upload</div>
               <div className="text-lg font-bold text-vpn-neon-green">12.8 MB/s</div>
             </div>
+          </div>
+        )}
+
+        {/* AdMob Banner for Free Users */}
+        {!isConnected && (
+          <div className="mt-6">
+            <AdMobBanner size="banner" className="mx-auto" />
           </div>
         )}
       </div>

@@ -1,9 +1,13 @@
 import { PlanCard } from "@/components/PlanCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Shield, Zap, Globe } from "lucide-react";
+import { AdMobBanner } from "@/components/ads/AdMobBanner";
+import { useAdMobReward } from "@/components/ads/AdMobReward";
+import { usePaymentIntegration, PaymentPlan } from "@/hooks/usePaymentIntegration";
+import { Crown, Shield, Zap, Globe, Gift } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-const plans = [
+const plans: PaymentPlan[] = [
   {
     id: "monthly",
     title: "Monthly",
@@ -15,7 +19,9 @@ const plans = [
       "No ads",
       "24/7 support",
       "5 simultaneous connections"
-    ]
+    ],
+    stripeProductId: "prod_monthly_placeholder",
+    razorpayPlanId: "plan_monthly_placeholder"
   },
   {
     id: "quarterly",
@@ -31,7 +37,9 @@ const plans = [
       "5 simultaneous connections",
       "Priority support"
     ],
-    isPopular: true
+    isPopular: true,
+    stripeProductId: "prod_quarterly_placeholder",
+    razorpayPlanId: "plan_quarterly_placeholder"
   },
   {
     id: "yearly",
@@ -47,7 +55,9 @@ const plans = [
       "10 simultaneous connections",
       "Advanced security features",
       "Dedicated IP option"
-    ]
+    ],
+    stripeProductId: "prod_yearly_placeholder",
+    razorpayPlanId: "plan_yearly_placeholder"
   }
 ];
 
@@ -67,9 +77,49 @@ const premiumBenefits = [
 ];
 
 export function Premium() {
-  const handlePlanSelect = (planId: string) => {
-    console.log("Selected plan:", planId);
-    // Here you would integrate with Stripe or payment provider
+  const { toast } = useToast();
+  const { initializePayment, restorePurchase, isProcessing, paymentConfig } = usePaymentIntegration();
+  
+  const { loadRewardAd, showRewardAd, isRewardAdReady } = useAdMobReward({
+    onUserEarnedReward: (reward) => {
+      toast({
+        title: "Reward Earned!",
+        description: `You earned ${reward.amount} hours of premium access!`,
+      });
+    }
+  });
+
+  const handlePlanSelect = async (planId: string) => {
+    const selectedPlan = plans.find(plan => plan.id === planId);
+    if (!selectedPlan) return;
+
+    const result = await initializePayment(selectedPlan);
+    
+    toast({
+      title: result.success ? "Success!" : "Payment Info",
+      description: result.message,
+      variant: result.success ? "default" : "destructive"
+    });
+  };
+
+  const handleRestorePurchase = async () => {
+    const result = await restorePurchase();
+    toast({
+      title: "Restore Purchase",
+      description: result.message,
+    });
+  };
+
+  const handleWatchRewardAd = () => {
+    if (isRewardAdReady()) {
+      showRewardAd();
+    } else {
+      loadRewardAd();
+      toast({
+        title: "Loading Ad...",
+        description: "Please wait while we prepare your reward ad.",
+      });
+    }
   };
 
   return (
@@ -155,13 +205,45 @@ export function Premium() {
           ))}
         </div>
 
+        {/* Free Premium Offer */}
+        <div className="card-vpn p-4 mb-4">
+          <div className="text-center">
+            <Gift className="w-6 h-6 text-vpn-electric-blue mx-auto mb-2" />
+            <h3 className="font-semibold mb-2">Get Premium Free!</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Watch an ad to unlock 24 hours of premium features
+            </p>
+            <Button
+              onClick={handleWatchRewardAd}
+              className="w-full bg-gradient-to-r from-vpn-electric-blue to-vpn-neon-green text-white hover:opacity-90"
+            >
+              <Gift className="w-4 h-4 mr-2" />
+              Watch Ad for Free Premium
+            </Button>
+          </div>
+        </div>
+
+        {/* AdMob Banner */}
+        <div className="mb-4">
+          <AdMobBanner size="banner" className="mx-auto" />
+        </div>
+
         {/* Restore Purchase */}
         <Button
+          onClick={handleRestorePurchase}
           variant="ghost"
-          className="w-full text-muted-foreground hover:text-foreground"
+          className="w-full text-muted-foreground hover:text-foreground mb-2"
+          disabled={isProcessing}
         >
-          Restore Purchase
+          {isProcessing ? "Processing..." : "Restore Purchase"}
         </Button>
+
+        {/* Payment Status */}
+        {!paymentConfig.isEnabled && (
+          <div className="text-center text-xs text-muted-foreground">
+            Payment integration ready for Stripe/Razorpay setup
+          </div>
+        )}
       </div>
     </div>
   );

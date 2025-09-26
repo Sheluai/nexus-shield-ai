@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { VPNShield } from "@/components/VPNShield";
+import { SearchEngine } from "@/components/SearchEngine";
 import { Button } from "@/components/ui/button";
 import { MapPin, Zap } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface HomeProps {
   onPageChange: (page: string) => void;
@@ -17,6 +19,8 @@ export function Home({ onPageChange }: HomeProps) {
     ping: 28
   });
 
+  const { toast } = useToast();
+
   const handleToggleConnection = async () => {
     if (isConnected) {
       setIsConnected(false);
@@ -31,11 +35,39 @@ export function Home({ onPageChange }: HomeProps) {
     }, 2000);
   };
 
+  const handleServerSearch = (query: string) => {
+    // Navigate to servers page with search query
+    onPageChange("servers");
+    toast({
+      title: "Searching servers",
+      description: `Looking for servers matching "${query}"`,
+    });
+  };
+
+  const handleContentSearch = (service: string) => {
+    const serviceMessages = {
+      netflix: "Connecting to Netflix-optimized servers...",
+      gaming: "Finding low-latency gaming servers...",
+      youtube: "Selecting servers for video streaming...",
+      browse: "Choosing best servers for browsing...",
+    };
+
+    toast({
+      title: "Optimizing for " + service,
+      description: serviceMessages[service as keyof typeof serviceMessages] || "Optimizing connection...",
+    });
+    
+    // Auto-connect logic could be implemented here
+    if (!isConnected && !isConnecting) {
+      handleToggleConnection();
+    }
+  };
+
   return (
     <div className="page-transition min-h-screen bg-gradient-primary p-6 pb-24">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1 className="text-2xl font-bold mb-2">SecureVPN</h1>
           <div className="flex items-center justify-center space-x-2 text-muted-foreground">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-vpn-connected' : 'bg-vpn-disconnected'}`}></div>
@@ -45,8 +77,16 @@ export function Home({ onPageChange }: HomeProps) {
           </div>
         </div>
 
+        {/* Search Engine */}
+        <div className="mb-8">
+          <SearchEngine 
+            onServerSearch={handleServerSearch}
+            onContentSearch={handleContentSearch}
+          />
+        </div>
+
         {/* Main Shield Section */}
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-8">
           <VPNShield 
             isConnected={isConnected}
             isConnecting={isConnecting}

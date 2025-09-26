@@ -17,8 +17,12 @@ const servers = [
   { id: 10, country: "Sweden", city: "Stockholm", flag: "🇸🇪", ping: 49 },
 ];
 
-export function Servers() {
-  const [searchQuery, setSearchQuery] = useState("");
+interface ServersProps {
+  searchQuery?: string;
+}
+
+export function Servers({ searchQuery: initialSearch = "" }: ServersProps) {
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [connectedServer, setConnectedServer] = useState(1);
 
   const filteredServers = servers.filter(server =>

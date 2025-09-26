@@ -57,6 +57,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        vpn: {
+          connected: "hsl(var(--vpn-connected))",
+          disconnected: "hsl(var(--vpn-disconnected))",
+          connecting: "hsl(var(--vpn-connecting))",
+          "electric-blue": "hsl(var(--electric-blue))",
+          "neon-green": "hsl(var(--neon-green))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
